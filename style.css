@@ -1,0 +1,70 @@
+/* Hit & Blow 見た目 */
+
+/* 色(明るいとき / 暗いとき)。H=ヒットの色、B=ブローの色 */
+:root{--bg:#f3f1ff;--card:#fff;--tx:#2b2840;--ac:#6d4aff;--bd:#ddd8f3;--H:#e5484d;--B:#e8a10c;--ok:#16a34a}
+@media(prefers-color-scheme:dark){:root{--bg:#17151f;--card:#24212f;--tx:#eee;--bd:#3d3850;--ac:#8a6dff}}
+
+/* 全体 */
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--tx);padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
+#app{max-width:460px;margin:0 auto;padding:14px 0 30px;text-align:center}
+h1{font-size:22px;margin:10px 0}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin:10px 0}
+hr{border:0;border-top:1px solid var(--bd);margin:10px 0}
+a{color:var(--ac)}
+
+/* ボタン・入力 */
+button{font:inherit;border:0;border-radius:10px;padding:11px 18px;background:var(--ac);color:#fff;font-weight:700;margin:4px;touch-action:manipulation}
+button.sub{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+button:disabled{opacity:.4}
+input{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);width:100%;margin:4px 0}
+
+/* 3けた/4けた の切りかえ */
+.seg button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.seg button:disabled.on{opacity:1}
+
+/* 文字 */
+.big{font-size:32px;font-weight:800;letter-spacing:4px;margin:6px 0}
+.code{font-size:40px;letter-spacing:6px;font-weight:800}
+.lbl{font-weight:700;margin-bottom:6px}
+.dim{opacity:.65;font-size:14px}
+.small{font-size:12px}
+.err{color:var(--H);min-height:20px}
+.foot{text-align:center;font-size:13px;margin-top:18px}
+.H{color:var(--H)}
+.B{color:var(--B)}
+.ok{color:var(--ok)}
+.warn{border-color:var(--B);font-weight:700}
+
+/* プレイヤーの名前札 */
+.pl{display:inline-block;padding:5px 12px;margin:3px;border-radius:20px;border:1px solid var(--bd)}
+.pl.me{background:var(--ac);color:#fff;border-color:var(--ac)}
+.vs{font-weight:800;margin:0 6px;opacity:.6}
+
+/* だれの番か */
+.turn{font-size:18px;font-weight:800;padding:10px;border-radius:12px;background:var(--card);border:1px solid var(--bd)}
+.turn.mine{background:var(--ac);color:#fff;border-color:var(--ac)}
+
+/* 入力中の数字のマス */
+.slots{display:flex;justify-content:center;gap:8px;margin:4px 0 10px}
+.slots span{width:48px;height:56px;border:2px solid var(--bd);border-radius:10px;font-size:30px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.slots span.on{border-color:var(--ac)}
+
+/* 数字ボタン(3列) */
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:300px;margin:0 auto}
+.keys button{margin:0;padding:12px 0;font-size:22px;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.keys button.ok{background:var(--ac);color:#fff;border-color:var(--ac);font-size:16px}
+
+/* メモ(0〜9) */
+.memo{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
+.memo button{margin:0;width:38px;padding:8px 0;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.memo button.x{opacity:.3;text-decoration:line-through}
+.memo button.o{background:var(--ok);color:#fff;border-color:var(--ok)}
+
+/* コールの記録 */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.two .card{margin:0;padding:8px}
+.hist{width:100%;border-collapse:collapse;font-size:15px}
+.hist td{padding:4px 2px;border-top:1px solid var(--bd)}
+.hist tr:first-child td{border-top:0}
+.hist .num{font-weight:800;letter-spacing:2px}
