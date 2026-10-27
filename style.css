@@ -101,3 +101,20 @@ input{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);ba
   #fx,.fxh,.fxb,.fxsub{animation:none!important;opacity:1}
   .fxh.zero,.fxb.zero{opacity:.6}
   .cf{display:none}}
+
+/* ===== フロア(A〜D) ===== */
+.floors{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.fl{background:var(--card);border:2px solid var(--bd);border-radius:14px;padding:8px}
+.fl.full{border-color:var(--ok)}
+.flh{font-weight:800;margin-bottom:6px}
+.fls{display:flex;flex-direction:column;align-items:stretch;gap:2px}
+.fls .vs{font-size:12px;margin:0}
+button.seat{margin:0;padding:9px 6px;background:transparent;color:var(--tx);border:1px dashed var(--bd);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button.seat.on{background:var(--ac);color:#fff;border:1px solid var(--ac)}
+button.seat:disabled{opacity:1;border-style:solid}
+/* 試合中: 下のフロア切りかえ */
+#ftab{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:6px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:5px;box-shadow:0 2px 10px rgba(0,0,0,.18);z-index:20}
+#ftab button{margin:0;padding:8px 12px;background:transparent;color:var(--tx);border:1px solid var(--bd)}
+#ftab button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+#ftab button:disabled{opacity:.35}
+#app:has(#ftab){padding-bottom:80px}
