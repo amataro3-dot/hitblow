@@ -1,11 +1,11 @@
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Hit & Blow 専用の Firebase プロジェクト(hitblow-598dd)
+// databaseURL は、Realtime Database をシンガポール(asia-southeast1)に作ったときのアドレス
 const firebaseConfig = {
-  apiKey: "AIzaSyBxf-38qXL-cUFIdJFd_x0JCJyXlHOKZHE",
-  authDomain: "labyrinth-game-bc5aa.firebaseapp.com",
-  databaseURL: "https://labyrinth-game-bc5aa-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "labyrinth-game-bc5aa",
-  storageBucket: "labyrinth-game-bc5aa.firebasestorage.app",
-  messagingSenderId: "534431752677",
-  appId: "1:534431752677:web:677413dac8ba95b0e50f0c",
-  measurementId: "G-4E4V3WDX6R"
+  apiKey: "AIzaSyBYBrGFuQxGkTy4cnK4qUEdSTwCO0_2lFk",
+  authDomain: "hitblow-598dd.firebaseapp.com",
+  databaseURL: "https://hitblow-598dd-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "hitblow-598dd",
+  storageBucket: "hitblow-598dd.firebasestorage.app",
+  messagingSenderId: "1060634393602",
+  appId: "1:1060634393602:web:2b441d6740651292a1bb1b"
 };

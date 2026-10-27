@@ -3,13 +3,12 @@
 相手のひみつの数字を当てる、2人用のオンライン数字当て対戦ゲーム。ひとりで練習モードつき。
 
 - 公開先: https://muddys-games.com/hitblow/ (リポジトリ名 `hitblow` で GitHub Pages)
-- ファイル: `index.html` / `style.css` / `game.js` / `config.js`(ほかのゲームと同じ Firebase 設定)
+- ファイル: `index.html` / `style.css` / `game.js` / `config.js`(専用の Firebase プロジェクト `hitblow-598dd`)
 - 遊び方ページ: サイト側の `howto-hitblow.html`
 
 ## Firebase のルールに足すもの(公開前に必須)
 
-Realtime Database → ルール の `"rules": { ... }` の中に、下の2つを足す。
-今あるゲームのルールは消さない。
+専用プロジェクト `hitblow-598dd` の Realtime Database → ルール に、下の2つを入れる(いちばん外側は `".read": false, ".write": false`)。
 
 ```json
 "hitblow-rooms": {
