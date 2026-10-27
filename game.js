@@ -43,6 +43,8 @@ const me={id:Math.random().toString(36).slice(2,10),name:LS.get('hb-name')||''};
    round: 画面が知っている試合の回 / solo: ひとりで練習のデータ
    odSet: 切断したら消す設定をした / startedRound: ホストが試合を始めた回 / sending: コールを送っている */
 let db=null,ref=null,sref=null,room=null,code='',mySecret='',judged={},cur='',memo={},round=null,solo=null,odSet=false,startedRound=-1,sending=false;
+/* 演出: fxQ 出す順番待ち / fxOn 出している / fxSeen もう演出したコール(null = まだ数えていない) */
+let fxQ=[],fxOn=false,fxSeen=null;
 
 /* 部屋の人(入った順)と、ホスト(いちばん先に入った人) */
 const plist=()=>Object.entries((room&&room.players)||{}).sort((a,b)=>(a[1].joined||0)-(b[1].joined||0));
@@ -75,6 +77,42 @@ function bindMemo(){
 function histHTML(list){
   if(!list.length)return'<div class="dim">まだありません</div>';
   return`<table class="hist">${list.map((g,i)=>[i,g]).reverse().map(([i,g])=>`<tr><td class="dim">${i+1}</td><td class="num">${esc(g.g)}</td><td>${g.h==null?'<span class="dim">判定中…</span>':`<b class="H">${g.h}H</b> <b class="B">${g.b}B</b>`}</td></tr>`).join('')}</table>`}
+
+/* ===== 演出: コールの結果を画面いっぱいに出す =====
+   どの数字がヒットかは見せない(答えが分かってしまうため)。数だけ出す */
+function showFx(o){fxQ.push(o);if(!fxOn)nextFx()}
+function nextFx(){
+  const o=fxQ.shift();
+  if(!o){fxOn=false;return}
+  fxOn=true;
+  const win=o.h===o.n,miss=!o.h&&!o.b;
+  const el=document.createElement('div');
+  el.id='fx';el.className=win?'win':miss?'miss':'';
+  el.innerHTML=`<div class="fxbox"><div class="fxwho">${esc(o.who)}のコール</div><div class="fxnum">${esc(o.g)}</div>
+<div class="fxtilt"><div class="fxh ${o.h?'':'zero'}">${o.h} HIT!</div>${win?'':`<div class="fxb ${o.b?'':'zero'}">${o.b} BLOW!</div>`}</div>
+${win?'<div class="fxsub">正解！</div>':miss?'<div class="fxsub">ハズレ…</div>':''}</div>`;
+  /* 正解は紙ふぶき */
+  if(win)for(let i=0;i<48;i++){
+    const c=document.createElement('i');c.className='cf';
+    c.style.left=Math.random()*100+'%';
+    c.style.background=['#e5484d','#ffc21a','#6d4aff','#2fbf71','#fff'][i%5];
+    c.style.animationDuration=(1.6+Math.random()*1.4)+'s';
+    c.style.animationDelay=(Math.random()*.5)+'s';
+    el.appendChild(c)}
+  document.body.appendChild(el);
+  let done=false;
+  const close=()=>{if(done)return;done=true;el.classList.add('out');setTimeout(()=>{el.remove();nextFx()},250)};
+  el.onclick=close;
+  setTimeout(close,win?2800:1600)}
+
+/* 部屋のコールで、判定が出たものを演出する(入ったときにもうあった判定は出さない) */
+function checkFx(opp){
+  const gs=guesses().filter(g=>g.h!=null);
+  if(fxSeen===null){fxSeen=new Set(gs.map(g=>g.k));return}
+  gs.forEach(g=>{
+    if(fxSeen.has(g.k))return;
+    fxSeen.add(g.k);
+    showFx({who:g.by===me.id?'あなた':opp[1].name,g:g.g,h:g.h,b:g.b,n:room.n})})}
 
 /* ===== ホーム ===== */
 function home(err){
@@ -115,6 +153,7 @@ ${s.done?`<div class="card"><div class="big ok">🎉 ${esc(s.secret)}</div><div>
   bindMemo();
   drawPad(s.n,'コール',g=>{
     const r=judge(s.secret,g);s.list.push({g,...r});
+    showFx({who:'あなた',g,h:r.h,b:r.b,n:s.n});
     if(r.h===s.n){
       s.done=true;
       const k='hb-best'+s.n,b=+LS.get(k)||Infinity;
@@ -162,7 +201,7 @@ async function enter(create){
 /* 部屋から離れたあとの片づけ */
 function cleanup(){
   try{ref&&ref.off()}catch(e){}
-  ref=null;sref=null;room=null;odSet=false;mySecret='';round=null;LS.del('hb-room')}
+  ref=null;sref=null;room=null;odSet=false;mySecret='';round=null;fxSeen=null;fxQ=[];LS.del('hb-room')}
 
 /* 退出する(最後の1人なら部屋ごと消す) */
 async function leave(){
@@ -191,13 +230,14 @@ function onRoom(){
   /* 新しい試合になったら、前の数字・メモを消す */
   if(round!==room.round){
     if(round!==null){mySecret='';sref.remove().catch(()=>{});judged={};sending=false}
-    round=room.round;memo={};cur=''}
+    round=room.round;memo={};cur='';fxSeen=null}
   const opp=plist().find(([id])=>id!==me.id);
   /* 相手が抜けたら、待ちあいにもどす */
   if(room.state!=='lobby'&&!opp){ref.update(resetFields('lobby'));return}
   if(room.state==='set')return drawSet(opp);
-  if(room.state==='play'){autoJudge();return drawPlay(opp)}
+  if(room.state==='play'){autoJudge();checkFx(opp);return drawPlay(opp)}
   if(room.state==='end'){
+    checkFx(opp);
     if(mySecret&&!(room.reveal&&room.reveal[me.id]))ref.child('reveal/'+me.id).set(mySecret);
     return drawEnd(opp)}
   drawLobby(opp)}

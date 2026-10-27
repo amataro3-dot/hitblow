@@ -68,3 +68,36 @@ input{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);ba
 .hist td{padding:4px 2px;border-top:1px solid var(--bd)}
 .hist tr:first-child td{border-top:0}
 .hist .num{font-weight:800;letter-spacing:2px}
+
+/* ===== 演出: コールの結果(HIT! / BLOW!) ===== */
+#fx{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(14,10,30,.8);overflow:hidden;animation:fxin .15s ease-out}
+#fx.out{animation:fxout .25s ease-in forwards}
+.fxbox{text-align:center;color:#fff;padding:0 16px}
+.fxwho{font-size:16px;opacity:.85}
+.fxnum{font-size:34px;font-weight:800;letter-spacing:8px;margin:2px 0 18px}
+/* 少し右上がりにななめ */
+.fxtilt{transform:rotate(-8deg)}
+.fxh,.fxb{font-weight:900;font-style:italic;line-height:1.05;white-space:nowrap;-webkit-text-stroke:2px #fff;paint-order:stroke fill;text-shadow:0 5px 0 rgba(0,0,0,.35);opacity:0;animation:fxpop .45s cubic-bezier(.2,1.6,.4,1) forwards}
+.fxh{font-size:68px;color:#ff3b47}
+.fxb{font-size:54px;color:#ffc21a;margin-left:44px;animation-delay:.3s}
+/* 0 のほうは、うすく */
+.fxh.zero,.fxb.zero{color:#8e8aa0;-webkit-text-stroke:0;text-shadow:none;animation-name:fxpopdim}
+.fxsub{font-size:26px;font-weight:800;margin-top:22px;opacity:0;animation:fxpop .4s .55s forwards}
+/* ハズレ: ぜんぶ灰色 */
+#fx.miss .fxsub{color:#c9c5d6}
+/* 正解: 大きく光る */
+#fx.win .fxh{font-size:88px;animation:fxpop .5s cubic-bezier(.2,1.6,.4,1) forwards,fxglow .5s .5s ease-in-out 4 alternate}
+#fx.win .fxsub{font-size:30px;color:#ffc21a;animation-delay:.4s}
+/* 紙ふぶき */
+.cf{position:absolute;top:-24px;width:9px;height:15px;border-radius:2px;animation:fxfall linear forwards}
+@keyframes fxin{from{opacity:0}}
+@keyframes fxout{to{opacity:0}}
+@keyframes fxpop{0%{opacity:0;transform:scale(2.4)}100%{opacity:1;transform:scale(1)}}
+@keyframes fxpopdim{0%{opacity:0;transform:scale(2.4)}100%{opacity:.6;transform:scale(1)}}
+@keyframes fxglow{to{text-shadow:0 0 16px #fff,0 0 40px #ff3b47,0 5px 0 rgba(0,0,0,.35)}}
+@keyframes fxfall{to{transform:translateY(112vh) rotate(760deg)}}
+/* 動きを減らす設定のスマホでは、動かさずに出す */
+@media (prefers-reduced-motion:reduce){
+  #fx,.fxh,.fxb,.fxsub{animation:none!important;opacity:1}
+  .fxh.zero,.fxb.zero{opacity:.6}
+  .cf{display:none}}
