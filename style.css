@@ -141,3 +141,7 @@ button.seat:disabled{opacity:1;border-style:solid}
 #ov .big{font-size:32px;font-weight:800;line-height:1.5}
 #ov .huge{font-size:min(48px,10.5vw);font-weight:900;color:#ff5a4d;white-space:nowrap}
 #ov .sm{font-size:16px;margin-top:12px}
+/* 相手の入力中を1行に収める(v=8) */
+.hist td{white-space:nowrap}
+.hist tr.typing .num span{width:auto;min-width:.8em}
+.hist tr.typing td:last-child{font-size:11px}
