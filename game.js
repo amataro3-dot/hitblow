@@ -42,9 +42,10 @@ const me={id:Math.random().toString(36).slice(2,10),name:LS.get('hb-name')||''};
    db, ref, sref: Firebase、いまの部屋、自分のひみつの数字の場所
    room: 部屋のデータ / code: 部屋コード / mySecret: 自分のひみつの数字
    judged: もう判定したコール / cur: 入力中の数字(マスごと) / sel: 選んでいるマス(-1 = 選んでいない) / memo: 0〜9 のメモ
+   pmemo: 場所のメモ(□ごとの数字) / psel: 選んでいる□ / onType: 入力が変わったときに呼ぶ(相手に入力中を見せる) / lastTyped: 最後に送った入力中
    round: 画面が知っている試合の回 / solo: ひとりで練習のデータ
    odSet: 切断したら消す設定をした / startedRound: ホストが試合を始めた回 / sending: コールを送っている */
-let db=null,ref=null,sref=null,room=null,code='',mySecret='',judged={},cur=[],sel=-1,memo={},round=null,solo=null,odSet=false,startedRound=-1,sending=false;
+let db=null,ref=null,sref=null,room=null,code='',mySecret='',judged={},cur=[],sel=-1,memo={},pmemo=[],psel=-1,onType=null,lastTyped='',round=null,solo=null,odSet=false,startedRound=-1,sending=false;
 /* 演出: fxQ 出す順番待ち / fxOn 出している / fxSeen もう演出したコール(null = まだ数えていない) */
 let fxQ=[],fxOn=false,fxSeen=null;
 
@@ -72,7 +73,7 @@ function drawPad(n,label,onOk,canOk=true){
     else if(k==='del')b.disabled=!cur.some(Boolean);
     else b.disabled=act<0||cur.includes(k);
     b.onclick=()=>{
-      if(k==='ok'){const v=curStr();cur=[];sel=-1;drawPad(n,label,onOk,false);onOk(v);return}
+      if(k==='ok'){const v=curStr();cur=[];sel=-1;drawPad(n,label,onOk,false);onType&&onType(n);onOk(v);return}
       if(k==='del'){
         /* 選んだマスに数字があればそれを消す。なければ、いちばん右の数字を消す */
         if(sel>=0&&cur[sel])cur[sel]='';
@@ -82,20 +83,36 @@ function drawPad(n,label,onOk,canOk=true){
         /* 次の空いているマスへ(右へ探して、なければ左から) */
         const nx=[...Array(n).keys()].map(d=>(act+1+d)%n).find(i=>!cur[i]);
         sel=sel>=0&&nx!=null?nx:-1}
-      drawPad(n,label,onOk,canOk)}})}
+      drawPad(n,label,onOk,canOk);onType&&onType(n)}})}
 
-/* メモ: タップするたびに ✕(ない) → ○(あるかも) → なし。自分のコールの記録にも反映する */
-const memoHTML=()=>`<div class="memo">${[...'0123456789'].map(d=>`<button class="${memo[d]||''}" data-d="${d}">${d}</button>`).join('')}</div><div class="dim small">メモ: タップで ✕ → ○ → なし</div>`;
-function bindMemo(){
-  app.querySelectorAll('.memo button').forEach(b=>b.onclick=()=>{
-    const d=b.dataset.d;memo[d]=memo[d]==='x'?'o':memo[d]==='o'?'':'x';b.className=memo[d];
+/* メモ: タップするたびに ✕(ない) → ○(あるかも) → なし。自分のコールの記録にも反映する
+   場所のメモ: □をタップして選ぶ → 0〜9 を押すと、その□に入る。数字が入っている□をタップすると空になる */
+const memoHTML=n=>`<div class="memobox"><div class="pml">場所のメモ</div><div class="pm">${Array.from({length:n},(_,i)=>`<button class="pbox ${i===psel?'sel':''}" data-p="${i}">${esc(pmemo[i]||'')}</button>`).join('')}</div>
+<div class="memo">${[...'0123456789'].map(d=>`<button class="${memo[d]||''}" data-d="${d}">${d}</button>`).join('')}</div>
+<div class="dim small">${psel>=0?'入れたい数字を押してね(□をもう一度押すとやめる)':'メモ: タップで ✕ → ○ → なし / □を押すと場所のメモ'}</div></div>`;
+function bindMemo(n){
+  const box=app.querySelector('.memobox');if(!box)return;
+  const redraw=()=>{box.outerHTML=memoHTML(n);bindMemo(n)};
+  box.querySelectorAll('.pbox').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.p;
+    if(pmemo[i]){pmemo[i]='';psel=-1}else psel=psel===i?-1:i;
+    redraw()});
+  box.querySelectorAll('.memo button').forEach(b=>b.onclick=()=>{
+    const d=b.dataset.d;
+    if(psel>=0){
+      /* 同じ数字がほかの□にあれば、そちらは空にする */
+      pmemo.forEach((x,i)=>{if(x===d)pmemo[i]=''});
+      pmemo[psel]=d;psel=-1;redraw();return}
+    memo[d]=memo[d]==='x'?'o':memo[d]==='o'?'':'x';b.className=memo[d];
     app.querySelectorAll(`.hist.mm .num span[data-d="${d}"]`).forEach(x=>x.className=memo[d]?'m'+memo[d]:'')})}
 
 /* コールの記録(新しいものが上)。mm=true なら、メモの ✕(薄く)・○(丸で囲む)を数字に反映する */
-function histHTML(list,mm=false){
-  if(!list.length)return'<div class="dim">まだありません</div>';
+/* typ: 相手が入力中の数字(まだ入れていないマスは _ )。あれば、いちばん上に出す */
+function histHTML(list,mm=false,typ=''){
+  const tr=typ?`<tr class="typing"><td>✏️</td><td class="num">${[...typ].map(c=>`<span>${c==='_'?'＿':esc(c)}</span>`).join('')}</td><td>入力中…</td></tr>`:'';
+  if(!list.length&&!tr)return'<div class="dim">まだありません</div>';
   const num=g=>mm?[...String(g)].map(d=>`<span data-d="${esc(d)}" class="${memo[d]?'m'+memo[d]:''}">${esc(d)}</span>`).join(''):esc(g);
-  return`<table class="hist${mm?' mm':''}">${list.map((g,i)=>[i,g]).reverse().map(([i,g])=>`<tr><td class="dim">${i+1}</td><td class="num">${num(g.g)}</td><td>${g.h==null?'<span class="dim">判定中…</span>':`<b class="H">${g.h}H</b> <b class="B">${g.b}B</b>`}</td></tr>`).join('')}</table>`}
+  return`<table class="hist${mm?' mm':''}">${tr}${list.map((g,i)=>[i,g]).reverse().map(([i,g])=>`<tr><td class="dim">${i+1}</td><td class="num">${num(g.g)}</td><td>${g.h==null?'<span class="dim">判定中…</span>':`<b class="H">${g.h}H</b> <b class="B">${g.b}B</b>`}</td></tr>`).join('')}</table>`}
 
 /* ===== 演出: コールの結果を画面いっぱいに出す =====
    どの数字がヒットかは見せない(答えが分かってしまうため)。数だけ出す */
@@ -149,18 +166,18 @@ function home(err){
 /* ===== ひとりで練習(コンピューターが決めた数字を当てる) ===== */
 function startSolo(){
   const n=+(LS.get('hb-n')||3);
-  solo={n,secret:randomNum(n),list:[],done:false,best:false};memo={};cur=[];sel=-1;drawSolo()}
+  solo={n,secret:randomNum(n),list:[],done:false,best:false};memo={};pmemo=[];psel=-1;cur=[];sel=-1;drawSolo()}
 function drawSolo(){
   const s=solo;
   app.innerHTML=`<h1>${TITLE}</h1><div class="dim">ひとりで練習(${s.n}けた)</div>
 ${s.done?`<div class="card"><div class="big ok">🎉 ${esc(s.secret)}</div><div>${s.list.length}回で当てた！${s.best?' <b>ベスト更新！</b>':''}</div><button id="ag">もう一回</button></div>`
-:`<div class="card"><div id="pad"></div></div><div class="card">${memoHTML()}</div>`}
+:`<div class="card"><div id="pad"></div></div><div class="card">${memoHTML(s.n)}</div>`}
 <div class="card"><div class="lbl">あなたのコール</div>${histHTML(s.list,true)}</div>
 <button id="bk" class="sub">${s.done?'もどる':'やめる'}</button>${s.done?'':'<button id="gu" class="sub">こうさん</button>'}${FOOT}`;
   $('bk').onclick=()=>home();
   if(s.done){$('ag').onclick=startSolo;return}
   $('gu').onclick=()=>{if(confirm('答えを見ますか？'))alert('答えは '+s.secret+' でした');startSolo()};
-  bindMemo();
+  bindMemo(s.n);onType=null;
   drawPad(s.n,'コール',g=>{
     const r=judge(s.secret,g);s.list.push({g,...r});
     showFx({who:'あなた',g,h:r.h,b:r.b,n:s.n});
@@ -249,7 +266,7 @@ function onRoom(){
   /* 新しい試合になったら、前の数字・メモを消す */
   if(round!==room.round){
     if(round!==null){mySecret='';sref.remove().catch(()=>{});judged={};sending=false}
-    round=room.round;memo={};cur=[];sel=-1;fxSeen=null}
+    round=room.round;memo={};pmemo=[];psel=-1;cur=[];sel=-1;lastTyped='';fxSeen=null}
   watchGone();
   if(room.state!=='game'){VF='';return drawLobby()}
   /* 見るフロア: 対戦中は自分のフロア。終わった人と観戦者は選べる */
@@ -331,6 +348,9 @@ function checkFx(F,f){
     fxSeen.add(g.k);
     showFx({who:g.by===me.id?'あなた':pname(g.by,f),g:g.g,h:g.h,b:g.b,n:room.n})})}
 
+/* 入力中の数字: 対戦中だけ、自分以外の人のものを出す */
+const typOf=(f,u)=>f.state==='play'&&u!==me.id&&f.typing&&f.typing[u]||'';
+
 /* 試合の画面(見ているフロア) */
 function drawGame(){
   const fl=room.fl||{},ks=Object.keys(fl).sort(),f=fl[VF],mine=!!f&&(f.a===me.id||f.b===me.id),all=ks.every(F=>fend(fl[F])),a=actF(),n=room.n;
@@ -352,8 +372,8 @@ function drawGame(){
     const note=f.last?`<div class="card warn">${mine?(f.last===me.id?'当てた！ 後攻の相手に最後のチャンス…':'相手が当てた！ 当てれば引き分け、ラストチャンス！'):esc(pname(f.last,f))+'が当てた！ 後攻のラストチャンス'}</div>`:'';
     const turnTxt=mine?(myTurn?'あなたの番！':pending?'判定中…':esc(pname(opp,f))+' の番…'):esc(pname(f.turn,f))+' の番';
     body=`<div class="turn ${myTurn?'mine':''}">${turnTxt}</div>${note}
-${mine?`<div class="card"><div id="pad"></div></div><div class="card">${memoHTML()}</div>`:''}
-<div class="two"><div class="card"><div class="lbl">${mine&&f.a===me.id?'あなた':esc(nmA)}</div>${histHTML(ga,mine&&f.a===me.id)}</div><div class="card"><div class="lbl">${mine&&f.b===me.id?'あなた':esc(nmB)}</div>${histHTML(gb,mine&&f.b===me.id)}</div></div>
+${mine?`<div class="card"><div id="pad"></div></div><div class="card">${memoHTML(n)}</div>`:''}
+<div class="two"><div class="card"><div class="lbl">${mine&&f.a===me.id?'あなた':esc(nmA)}</div>${histHTML(ga,mine&&f.a===me.id,typOf(f,f.a))}</div><div class="card"><div class="lbl">${mine&&f.b===me.id?'あなた':esc(nmB)}</div>${histHTML(gb,mine&&f.b===me.id,typOf(f,f.b))}</div></div>
 ${mine?`<div class="dim">あなたのひみつの数字: <b>${esc(mySecret||'？')}</b></div>`:''}`;
     if(mine)pad={myTurn}}
   else{
@@ -380,10 +400,13 @@ ${mine?`<div class="dim">あなたのひみつの数字: <b>${esc(mySecret||'？
       mySecret=v;
       try{await sref.set(v);await fref(F).child('ready/'+me.id).set(true)}
       catch(e){console.warn(e);mySecret='';alert('保存できませんでした。もう一度ためしてね');drawGame()}};
-    drawPad(n,'決定',ok);
+    onType=null;drawPad(n,'決定',ok);
     $('rn').onclick=()=>{cur=[...randomNum(n)];sel=-1;drawPad(n,'決定',ok)}}
   else if(pad){
-    const F=VF;bindMemo();
+    const F=VF;bindMemo(n);
+    /* 入力中の数字を相手と観戦者に見せる(対戦中だけ。ひみつの数字を決めるときは送らない) */
+    onType=nn=>{const t=cur.some(Boolean)?Array.from({length:nn},(_,i)=>cur[i]||'_').join(''):'';
+      if(t===lastTyped)return;lastTyped=t;fref(F).child('typing/'+me.id).set(t||null).catch(()=>{})};
     drawPad(n,'コール',g=>{
       const f2=room.fl&&room.fl[F];
       if(!valid(g,n)||!f2||f2.turn!==me.id||sending)return;

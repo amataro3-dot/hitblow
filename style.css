@@ -61,7 +61,7 @@ input{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);ba
 .memo{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
 .memo button{margin:0;width:38px;padding:8px 0;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
 .memo button.x{opacity:.3;text-decoration:line-through}
-.memo button.o{border-radius:50%;border:2.5px solid var(--ok);font-weight:900;color:var(--tx);background:var(--card)}
+.memo button.o{border-radius:50%;border:2.5px solid var(--tx);font-weight:900;color:var(--tx);background:var(--card)}
 
 /* コールの記録 */
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -124,4 +124,13 @@ button.seat:disabled{opacity:1;border-style:solid}
 /* コールの記録の数字に、メモを反映(✕ = 薄く線、○ = 丸で囲む) */
 .hist .num span{display:inline-block;width:1.3em;text-align:center}
 .hist .num span.mx{opacity:.3;text-decoration:line-through}
-.hist .num span.mo{border:2px solid var(--ok);border-radius:50%;line-height:1.15em;font-weight:900}
+.hist .num span.mo{border:2px solid var(--tx);border-radius:50%;line-height:1.15em;font-weight:900}
+
+/* 場所のメモ(□) */
+.pml{font-size:12px;opacity:.7;margin-bottom:2px}
+.pm{display:flex;justify-content:center;gap:8px;margin:0 0 8px}
+.pm .pbox{margin:0;padding:0;width:46px;height:50px;border:2px dashed var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font-size:24px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.pm .pbox:not(:empty){border-style:solid;border-color:var(--tx)}
+.pm .pbox.sel{border:2px solid var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 35%,transparent)}
+/* 相手の入力中 */
+.hist tr.typing td{color:var(--ac);font-weight:800}
