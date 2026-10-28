@@ -47,8 +47,10 @@ input{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);ba
 
 /* 入力中の数字のマス */
 .slots{display:flex;justify-content:center;gap:8px;margin:4px 0 10px}
-.slots span{width:48px;height:56px;border:2px solid var(--bd);border-radius:10px;font-size:30px;font-weight:800;display:flex;align-items:center;justify-content:center}
-.slots span.on{border-color:var(--ac)}
+.slots .slot{margin:0;padding:0;width:52px;height:60px;border:2px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font-size:30px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.slots .slot.on{border-color:var(--ac)}
+/* 次に数字が入るマス(タップで選んだマス) */
+.slots .slot.sel{border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 35%,transparent);background:color-mix(in srgb,var(--ac) 10%,var(--card))}
 
 /* 数字ボタン(3列) */
 .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:300px;margin:0 auto}
@@ -59,7 +61,7 @@ input{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);ba
 .memo{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
 .memo button{margin:0;width:38px;padding:8px 0;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
 .memo button.x{opacity:.3;text-decoration:line-through}
-.memo button.o{background:var(--ok);color:#fff;border-color:var(--ok)}
+.memo button.o{border-radius:50%;border:2.5px solid var(--ok);font-weight:900;color:var(--tx);background:var(--card)}
 
 /* コールの記録 */
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -118,3 +120,8 @@ button.seat:disabled{opacity:1;border-style:solid}
 #ftab button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 #ftab button:disabled{opacity:.35}
 #app:has(#ftab){padding-bottom:80px}
+
+/* コールの記録の数字に、メモを反映(✕ = 薄く線、○ = 丸で囲む) */
+.hist .num span{display:inline-block;width:1.3em;text-align:center}
+.hist .num span.mx{opacity:.3;text-decoration:line-through}
+.hist .num span.mo{border:2px solid var(--ok);border-radius:50%;line-height:1.15em;font-weight:900}

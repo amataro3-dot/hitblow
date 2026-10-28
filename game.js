@@ -41,10 +41,10 @@ const me={id:Math.random().toString(36).slice(2,10),name:LS.get('hb-name')||''};
 /* ゲームの状態
    db, ref, sref: Firebase、いまの部屋、自分のひみつの数字の場所
    room: 部屋のデータ / code: 部屋コード / mySecret: 自分のひみつの数字
-   judged: もう判定したコール / cur: 入力中の数字 / memo: 0〜9 のメモ
+   judged: もう判定したコール / cur: 入力中の数字(マスごと) / sel: 選んでいるマス(-1 = 選んでいない) / memo: 0〜9 のメモ
    round: 画面が知っている試合の回 / solo: ひとりで練習のデータ
    odSet: 切断したら消す設定をした / startedRound: ホストが試合を始めた回 / sending: コールを送っている */
-let db=null,ref=null,sref=null,room=null,code='',mySecret='',judged={},cur='',memo={},round=null,solo=null,odSet=false,startedRound=-1,sending=false;
+let db=null,ref=null,sref=null,room=null,code='',mySecret='',judged={},cur=[],sel=-1,memo={},round=null,solo=null,odSet=false,startedRound=-1,sending=false;
 /* 演出: fxQ 出す順番待ち / fxOn 出している / fxSeen もう演出したコール(null = まだ数えていない) */
 let fxQ=[],fxOn=false,fxSeen=null;
 
@@ -54,31 +54,48 @@ const isHost=()=>{const p=plist();return p.length>0&&p[0][0]===me.id};
 
 /* ===== 入力の部品 ===== */
 
-/* 数字ボタン。同じ数字は2回押せない。canOk=false なら OK だけ押せない(相手の番に先に打っておける) */
+/* 数字ボタン。同じ数字は2回押せない。canOk=false なら OK だけ押せない(相手の番に先に打っておける)
+   上のマスをタップすると、そのマスを選べる(もう一度タップで外れる)。数字は選んだマスに入り、次の空いているマスへ進む。
+   マスを選んでいなければ、左から順に入る */
+const curStr=()=>cur.join('');
+const curFull=n=>Array.from({length:n},(_,i)=>cur[i]).every(Boolean);
 function drawPad(n,label,onOk,canOk=true){
   const el=$('pad');if(!el)return;
-  el.innerHTML=`<div class="slots">${Array.from({length:n},(_,i)=>`<span class="${cur[i]?'on':''}">${cur[i]??''}</span>`).join('')}</div>
+  const free=Array.from({length:n},(_,i)=>i).filter(i=>!cur[i]);
+  const act=sel>=0?sel:(free[0]??-1);
+  el.innerHTML=`<div class="slots">${Array.from({length:n},(_,i)=>`<button class="slot ${cur[i]?'on':''} ${i===act?'sel':''}" data-i="${i}">${esc(cur[i]||'')}</button>`).join('')}</div>
 <div class="keys">${['1','2','3','4','5','6','7','8','9','del','0','ok'].map(k=>`<button class="${k}" data-k="${k}">${k==='del'?'⌫':k==='ok'?esc(label):k}</button>`).join('')}</div>`;
-  el.querySelectorAll('button').forEach(b=>{
+  el.querySelectorAll('.slot').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;sel=sel===i?-1:i;drawPad(n,label,onOk,canOk)});
+  el.querySelectorAll('.keys button').forEach(b=>{
     const k=b.dataset.k;
-    if(k==='ok')b.disabled=!canOk||cur.length!==n;
-    else if(k==='del')b.disabled=!cur;
-    else b.disabled=cur.includes(k)||cur.length>=n;
+    if(k==='ok')b.disabled=!canOk||!curFull(n);
+    else if(k==='del')b.disabled=!cur.some(Boolean);
+    else b.disabled=act<0||cur.includes(k);
     b.onclick=()=>{
-      if(k==='ok'){const v=cur;cur='';drawPad(n,label,onOk,false);onOk(v);return}
-      cur=k==='del'?cur.slice(0,-1):cur+k;
+      if(k==='ok'){const v=curStr();cur=[];sel=-1;drawPad(n,label,onOk,false);onOk(v);return}
+      if(k==='del'){
+        /* 選んだマスに数字があればそれを消す。なければ、いちばん右の数字を消す */
+        if(sel>=0&&cur[sel])cur[sel]='';
+        else{const j=cur.map((d,i)=>d?i:-1).filter(i=>i>=0).pop();if(j!=null){cur[j]='';if(sel>=0)sel=j}}}
+      else{
+        cur[act]=k;
+        /* 次の空いているマスへ(右へ探して、なければ左から) */
+        const nx=[...Array(n).keys()].map(d=>(act+1+d)%n).find(i=>!cur[i]);
+        sel=sel>=0&&nx!=null?nx:-1}
       drawPad(n,label,onOk,canOk)}})}
 
-/* メモ: タップするたびに ✕(ない) → ○(ある) → なし */
+/* メモ: タップするたびに ✕(ない) → ○(あるかも) → なし。自分のコールの記録にも反映する */
 const memoHTML=()=>`<div class="memo">${[...'0123456789'].map(d=>`<button class="${memo[d]||''}" data-d="${d}">${d}</button>`).join('')}</div><div class="dim small">メモ: タップで ✕ → ○ → なし</div>`;
 function bindMemo(){
   app.querySelectorAll('.memo button').forEach(b=>b.onclick=()=>{
-    const d=b.dataset.d;memo[d]=memo[d]==='x'?'o':memo[d]==='o'?'':'x';b.className=memo[d]})}
+    const d=b.dataset.d;memo[d]=memo[d]==='x'?'o':memo[d]==='o'?'':'x';b.className=memo[d];
+    app.querySelectorAll(`.hist.mm .num span[data-d="${d}"]`).forEach(x=>x.className=memo[d]?'m'+memo[d]:'')})}
 
-/* コールの記録(新しいものが上) */
-function histHTML(list){
+/* コールの記録(新しいものが上)。mm=true なら、メモの ✕(薄く)・○(丸で囲む)を数字に反映する */
+function histHTML(list,mm=false){
   if(!list.length)return'<div class="dim">まだありません</div>';
-  return`<table class="hist">${list.map((g,i)=>[i,g]).reverse().map(([i,g])=>`<tr><td class="dim">${i+1}</td><td class="num">${esc(g.g)}</td><td>${g.h==null?'<span class="dim">判定中…</span>':`<b class="H">${g.h}H</b> <b class="B">${g.b}B</b>`}</td></tr>`).join('')}</table>`}
+  const num=g=>mm?[...String(g)].map(d=>`<span data-d="${esc(d)}" class="${memo[d]?'m'+memo[d]:''}">${esc(d)}</span>`).join(''):esc(g);
+  return`<table class="hist${mm?' mm':''}">${list.map((g,i)=>[i,g]).reverse().map(([i,g])=>`<tr><td class="dim">${i+1}</td><td class="num">${num(g.g)}</td><td>${g.h==null?'<span class="dim">判定中…</span>':`<b class="H">${g.h}H</b> <b class="B">${g.b}B</b>`}</td></tr>`).join('')}</table>`}
 
 /* ===== 演出: コールの結果を画面いっぱいに出す =====
    どの数字がヒットかは見せない(答えが分かってしまうため)。数だけ出す */
@@ -109,7 +126,7 @@ ${win?'<div class="fxsub">正解！</div>':miss?'<div class="fxsub">ハズレ…
 
 /* ===== ホーム ===== */
 function home(err){
-  room=null;solo=null;cur='';
+  room=null;solo=null;cur=[];sel=-1;
   const n=LS.get('hb-n')||'3',on=!!db;
   app.innerHTML=`<h1>${TITLE}</h1>
 <div class="card">相手のひみつの数字を、先に当てたほうが勝ち！<br><b class="H">ヒット</b> … 数字も場所も同じ<br><b class="B">ブロー</b> … 数字は同じで、場所がちがう</div>
@@ -132,13 +149,13 @@ function home(err){
 /* ===== ひとりで練習(コンピューターが決めた数字を当てる) ===== */
 function startSolo(){
   const n=+(LS.get('hb-n')||3);
-  solo={n,secret:randomNum(n),list:[],done:false,best:false};memo={};cur='';drawSolo()}
+  solo={n,secret:randomNum(n),list:[],done:false,best:false};memo={};cur=[];sel=-1;drawSolo()}
 function drawSolo(){
   const s=solo;
   app.innerHTML=`<h1>${TITLE}</h1><div class="dim">ひとりで練習(${s.n}けた)</div>
 ${s.done?`<div class="card"><div class="big ok">🎉 ${esc(s.secret)}</div><div>${s.list.length}回で当てた！${s.best?' <b>ベスト更新！</b>':''}</div><button id="ag">もう一回</button></div>`
 :`<div class="card"><div id="pad"></div></div><div class="card">${memoHTML()}</div>`}
-<div class="card"><div class="lbl">あなたのコール</div>${histHTML(s.list)}</div>
+<div class="card"><div class="lbl">あなたのコール</div>${histHTML(s.list,true)}</div>
 <button id="bk" class="sub">${s.done?'もどる':'やめる'}</button>${s.done?'':'<button id="gu" class="sub">こうさん</button>'}${FOOT}`;
   $('bk').onclick=()=>home();
   if(s.done){$('ag').onclick=startSolo;return}
@@ -232,7 +249,7 @@ function onRoom(){
   /* 新しい試合になったら、前の数字・メモを消す */
   if(round!==room.round){
     if(round!==null){mySecret='';sref.remove().catch(()=>{});judged={};sending=false}
-    round=room.round;memo={};cur='';fxSeen=null}
+    round=room.round;memo={};cur=[];sel=-1;fxSeen=null}
   watchGone();
   if(room.state!=='game'){VF='';return drawLobby()}
   /* 見るフロア: 対戦中は自分のフロア。終わった人と観戦者は選べる */
@@ -336,7 +353,7 @@ function drawGame(){
     const turnTxt=mine?(myTurn?'あなたの番！':pending?'判定中…':esc(pname(opp,f))+' の番…'):esc(pname(f.turn,f))+' の番';
     body=`<div class="turn ${myTurn?'mine':''}">${turnTxt}</div>${note}
 ${mine?`<div class="card"><div id="pad"></div></div><div class="card">${memoHTML()}</div>`:''}
-<div class="two"><div class="card"><div class="lbl">${mine&&f.a===me.id?'あなた':esc(nmA)}</div>${histHTML(ga)}</div><div class="card"><div class="lbl">${mine&&f.b===me.id?'あなた':esc(nmB)}</div>${histHTML(gb)}</div></div>
+<div class="two"><div class="card"><div class="lbl">${mine&&f.a===me.id?'あなた':esc(nmA)}</div>${histHTML(ga,mine&&f.a===me.id)}</div><div class="card"><div class="lbl">${mine&&f.b===me.id?'あなた':esc(nmB)}</div>${histHTML(gb,mine&&f.b===me.id)}</div></div>
 ${mine?`<div class="dim">あなたのひみつの数字: <b>${esc(mySecret||'？')}</b></div>`:''}`;
     if(mine)pad={myTurn}}
   else{
@@ -344,7 +361,7 @@ ${mine?`<div class="dim">あなたのひみつの数字: <b>${esc(mySecret||'？
     const res=mine?(w==='draw'?'🤝 引き分け！':w===me.id?'🏆 あなたの勝ち！'+ff:'😢 負け…'):(w==='draw'?'🤝 引き分け！':'🏆 '+esc(pname(w,f))+'の勝ち！'+ff);
     body=`<div class="card"><div class="big ${mine&&w===me.id?'ok':''}" style="letter-spacing:0">${res}</div>
 <div class="two" style="margin-top:8px"><div><div class="dim">${mine&&f.a===me.id?'あなた':esc(nmA)}の数字</div><div class="big">${esc(rv[f.a]||(f.a===me.id&&mySecret)||'…')}</div></div><div><div class="dim">${mine&&f.b===me.id?'あなた':esc(nmB)}の数字</div><div class="big">${esc(rv[f.b]||(f.b===me.id&&mySecret)||'…')}</div></div></div></div>
-<div class="two"><div class="card"><div class="lbl">${esc(nmA)}</div>${histHTML(ga)}</div><div class="card"><div class="lbl">${esc(nmB)}</div>${histHTML(gb)}</div></div>`}
+<div class="two"><div class="card"><div class="lbl">${esc(nmA)}</div>${histHTML(ga,mine&&f.a===me.id)}</div><div class="card"><div class="lbl">${esc(nmB)}</div>${histHTML(gb,mine&&f.b===me.id)}</div></div>`}
   /* 全部のフロアが終わったら、ホストがロビーへ */
   let foot='';
   if(all)foot=isHost()?'<button id="ag">もう一回(ロビーへ)</button>':'<div class="dim">ホストが「もう一回」を押すのを待っています</div>';
@@ -364,7 +381,7 @@ ${mine?`<div class="dim">あなたのひみつの数字: <b>${esc(mySecret||'？
       try{await sref.set(v);await fref(F).child('ready/'+me.id).set(true)}
       catch(e){console.warn(e);mySecret='';alert('保存できませんでした。もう一度ためしてね');drawGame()}};
     drawPad(n,'決定',ok);
-    $('rn').onclick=()=>{cur=randomNum(n);drawPad(n,'決定',ok)}}
+    $('rn').onclick=()=>{cur=[...randomNum(n)];sel=-1;drawPad(n,'決定',ok)}}
   else if(pad){
     const F=VF;bindMemo();
     drawPad(n,'コール',g=>{
