@@ -145,3 +145,5 @@ button.seat:disabled{opacity:1;border-style:solid}
 .hist td{white-space:nowrap}
 .hist tr.typing .num span{width:auto;min-width:.8em}
 .hist tr.typing td:last-child{font-size:11px}
+/* メモで ✕ にした数字ボタン: 薄くするだけ(押せる。押せないボタンより薄く、線は引かない) */
+.keys button.memox:not(:disabled){color:color-mix(in srgb,var(--tx) 28%,transparent);background:color-mix(in srgb,var(--bd) 35%,var(--card))}

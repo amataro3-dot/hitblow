@@ -65,7 +65,7 @@ function drawPad(n,label,onOk,canOk=true){
   const free=Array.from({length:n},(_,i)=>i).filter(i=>!cur[i]);
   const act=sel>=0?sel:(free[0]??-1);
   el.innerHTML=`<div class="slots">${Array.from({length:n},(_,i)=>`<button class="slot ${cur[i]?'on':''} ${i===act?'sel':''}" data-i="${i}">${esc(cur[i]||'')}</button>`).join('')}</div>
-<div class="keys">${['1','2','3','4','5','6','7','8','9','del','0','ok'].map(k=>`<button class="${k}" data-k="${k}">${k==='del'?'⌫':k==='ok'?esc(label):k}</button>`).join('')}</div>`;
+<div class="keys">${['1','2','3','4','5','6','7','8','9','del','0','ok'].map(k=>`<button class="${k}${memo[k]==='x'?' memox':''}" data-k="${k}">${k==='del'?'⌫':k==='ok'?esc(label):k}</button>`).join('')}</div>`;
   el.querySelectorAll('.slot').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;sel=sel===i?-1:i;drawPad(n,label,onOk,canOk)});
   el.querySelectorAll('.keys button').forEach(b=>{
     const k=b.dataset.k;
@@ -104,6 +104,8 @@ function bindMemo(n){
       pmemo.forEach((x,i)=>{if(x===d)pmemo[i]=''});
       pmemo[psel]=d;psel=-1;redraw();return}
     memo[d]=memo[d]==='x'?'o':memo[d]==='o'?'':'x';b.className=memo[d];
+    /* ✕ にした数字は、上の数字ボタンも薄くする(押すことはできる) */
+    app.querySelectorAll(`#pad .keys button[data-k="${d}"]`).forEach(x=>x.classList.toggle('memox',memo[d]==='x'));
     app.querySelectorAll(`.hist.mm .num span[data-d="${d}"]`).forEach(x=>x.className=memo[d]?'m'+memo[d]:'')})}
 
 /* コールの記録(新しいものが上)。mm=true なら、メモの ✕(薄く)・○(丸で囲む)を数字に反映する */
