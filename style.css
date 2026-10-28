@@ -134,3 +134,10 @@ button.seat:disabled{opacity:1;border-style:solid}
 .pm .pbox.sel{border:2px solid var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 35%,transparent)}
 /* 相手の入力中 */
 .hist tr.typing td{color:var(--ac);font-weight:800}
+
+/* ===== 発表(先攻・後攻、サドンデス)。Labyrinth と同じ見た目 ===== */
+#ov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.85);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;animation:fxin .15s ease-out}
+#ov.out{animation:fxout .25s ease-in forwards}
+#ov .big{font-size:32px;font-weight:800;line-height:1.5}
+#ov .huge{font-size:min(48px,10.5vw);font-weight:900;color:#ff5a4d;white-space:nowrap}
+#ov .sm{font-size:16px;margin-top:12px}

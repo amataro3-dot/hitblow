@@ -121,6 +121,12 @@ function nextFx(){
   const o=fxQ.shift();
   if(!o){fxOn=false;return}
   fxOn=true;
+  /* 発表(先攻・後攻、サドンデス): Labyrinth と同じ、黒い画面に白い大きな字 */
+  if(o.ov){
+    const el=document.createElement('div');el.id='ov';el.innerHTML=o.ov;document.body.appendChild(el);
+    let done=false;
+    const close=()=>{if(done)return;done=true;el.classList.add('out');setTimeout(()=>{el.remove();nextFx()},250)};
+    el.onclick=close;setTimeout(close,o.ms||2000);return}
   const win=o.h===o.n,miss=!o.h&&!o.b;
   const el=document.createElement('div');
   el.id='fx';el.className=win?'win':miss?'miss':'';
@@ -342,11 +348,19 @@ function autoJudge(F,f){
 /* 見ているフロアのコールで、判定が出たものを演出する(見はじめたときにもうあった判定は出さない) */
 function checkFx(F,f){
   const gs=fguesses(f).filter(g=>g.h!=null);
-  if(fxSeen===null){fxSeen=new Set(gs.map(g=>g.k));return}
+  /* 見はじめたときに、もう出ていたもの(判定・先攻の発表・サドンデス)は出さない */
+  if(fxSeen===null){fxSeen=new Set(gs.map(g=>g.k));if(f.first)fxSeen.add('start');if(f.last)fxSeen.add('last');return}
+  if(f.first&&!fxSeen.has('start')){
+    fxSeen.add('start');const second=f.first===f.a?f.b:f.a;
+    showFx({ov:`<div class="big">${esc(pname(f.first,f))}さん先攻！<br>${esc(pname(second,f))}さん後攻です！</div>`,ms:2000})}
   gs.forEach(g=>{
     if(fxSeen.has(g.k))return;
     fxSeen.add(g.k);
-    showFx({who:g.by===me.id?'あなた':pname(g.by,f),g:g.g,h:g.h,b:g.b,n:room.n})})}
+    showFx({who:g.by===me.id?'あなた':pname(g.by,f),g:g.g,h:g.h,b:g.b,n:room.n})});
+  /* 先攻が当てたら、正解の演出のあとにサドンデス */
+  if(f.last&&!fxSeen.has('last')){
+    fxSeen.add('last');const second=f.last===f.a?f.b:f.a;
+    showFx({ov:`<div class="huge">サドンデス！！！</div><div class="sm">${esc(pname(second,f))}さん、当てられなかったら負け！</div>`,ms:2500})}}
 
 /* 入力中の数字: 対戦中だけ、自分以外の人のものを出す */
 const typOf=(f,u)=>f.state==='play'&&u!==me.id&&f.typing&&f.typing[u]||'';
