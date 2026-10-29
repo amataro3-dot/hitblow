@@ -435,7 +435,8 @@ function boot(){
   if(typeof firebase==='undefined'||typeof firebaseConfig==='undefined')return home('オンライン対戦に今つなげません(ひとりで練習はできます)');
   try{
     firebase.initializeApp(firebaseConfig);
-    /* App Check は、まだ使っていない(専用プロジェクトに reCAPTCHA の設定ができたら、ここで activate する) */
+    /* App Check: このサイトから来たアクセスだと証明する(reCAPTCHA Enterprise。サイトキーは公開してよいもの。失敗してもゲームは続ける) */
+    try{firebase.appCheck().activate(new firebase.appCheck.ReCaptchaEnterpriseProvider('6LdxegYuAAAAAEsspAxLI1swKYC_vKCa1OpYG7p5'),true)}catch(e){console.warn('App Check',e)}
     db=firebase.database()}
   catch(e){console.warn(e);db=null;return home('オンライン対戦に今つなげません(ひとりで練習はできます)')}
   app.innerHTML=`<h1>${TITLE}</h1><div class="card dim">接続中…</div>`;
