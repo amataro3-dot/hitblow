@@ -21,7 +21,7 @@ const LS={
   set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
   del(k){try{localStorage.removeItem(k)}catch(e){}}};
 const TITLE='🔢 Hit & Blow';
-const FOOT='<p class="dim foot"><a href="/">Muddy\'s Games トップ</a>・<a href="/howto-hitblow.html">遊び方</a>・<a href="/privacy.html">プライバシーポリシー</a></p>';
+const FOOT=`<p class="dim foot"><a href="${sitePath('/')}">${T("Muddy's Games トップ")}</a>・<a href="${sitePath('/howto-hitblow.html')}">${T('遊び方')}</a>・<a href="${sitePath('/privacy.html')}">${T('プライバシーポリシー')}</a></p>`;
 
 /* 判定: 数字も場所も同じ=ヒット、数字だけ同じ=ブロー */
 function judge(secret,guess){
@@ -87,9 +87,9 @@ function drawPad(n,label,onOk,canOk=true){
 
 /* メモ: タップするたびに ✕(ない) → ○(あるかも) → なし。自分のコールの記録にも反映する
    場所のメモ: □をタップして選ぶ → 0〜9 を押すと、その□に入る。数字が入っている□をタップすると空になる */
-const memoHTML=n=>`<div class="memobox"><div class="pml">場所のメモ</div><div class="pm">${Array.from({length:n},(_,i)=>`<button class="pbox ${i===psel?'sel':''}" data-p="${i}">${esc(pmemo[i]||'')}</button>`).join('')}</div>
+const memoHTML=n=>`<div class="memobox"><div class="pml">${T('場所のメモ')}</div><div class="pm">${Array.from({length:n},(_,i)=>`<button class="pbox ${i===psel?'sel':''}" data-p="${i}">${esc(pmemo[i]||'')}</button>`).join('')}</div>
 <div class="memo">${[...'0123456789'].map(d=>`<button class="${memo[d]||''}" data-d="${d}">${d}</button>`).join('')}</div>
-<div class="dim small">${psel>=0?'入れたい数字を押してね(□をもう一度押すとやめる)':'メモ: タップで ✕ → ○ → なし / □を押すと場所のメモ'}</div></div>`;
+<div class="dim small">${psel>=0?T('入れたい数字を押してね(□をもう一度押すとやめる)'):T('メモ: タップで ✕ → ○ → なし / □を押すと場所のメモ')}</div></div>`;
 function bindMemo(n){
   const box=app.querySelector('.memobox');if(!box)return;
   const redraw=()=>{box.outerHTML=memoHTML(n);bindMemo(n)};
@@ -111,10 +111,10 @@ function bindMemo(n){
 /* コールの記録(新しいものが上)。mm=true なら、メモの ✕(薄く)・○(丸で囲む)を数字に反映する */
 /* typ: 相手が入力中の数字(まだ入れていないマスは _ )。あれば、いちばん上に出す */
 function histHTML(list,mm=false,typ=''){
-  const tr=typ?`<tr class="typing"><td>✏️</td><td class="num">${[...typ].map(c=>`<span>${c==='_'?'＿':esc(c)}</span>`).join('')}</td><td>入力中…</td></tr>`:'';
-  if(!list.length&&!tr)return'<div class="dim">まだありません</div>';
+  const tr=typ?`<tr class="typing"><td>✏️</td><td class="num">${[...typ].map(c=>`<span>${c==='_'?'＿':esc(c)}</span>`).join('')}</td><td>${T('入力中…')}</td></tr>`:'';
+  if(!list.length&&!tr)return'<div class="dim">'+T('まだありません')+'</div>';
   const num=g=>mm?[...String(g)].map(d=>`<span data-d="${esc(d)}" class="${memo[d]?'m'+memo[d]:''}">${esc(d)}</span>`).join(''):esc(g);
-  return`<table class="hist${mm?' mm':''}">${tr}${list.map((g,i)=>[i,g]).reverse().map(([i,g])=>`<tr><td class="dim">${i+1}</td><td class="num">${num(g.g)}</td><td>${g.h==null?'<span class="dim">判定中…</span>':`<b class="H">${g.h}H</b> <b class="B">${g.b}B</b>`}</td></tr>`).join('')}</table>`}
+  return`<table class="hist${mm?' mm':''}">${tr}${list.map((g,i)=>[i,g]).reverse().map(([i,g])=>`<tr><td class="dim">${i+1}</td><td class="num">${num(g.g)}</td><td>${g.h==null?'<span class="dim">'+T('判定中…')+'</span>':`<b class="H">${g.h}H</b> <b class="B">${g.b}B</b>`}</td></tr>`).join('')}</table>`}
 
 /* ===== 演出: コールの結果を画面いっぱいに出す =====
    どの数字がヒットかは見せない(答えが分かってしまうため)。数だけ出す */
@@ -132,9 +132,9 @@ function nextFx(){
   const win=o.h===o.n,miss=!o.h&&!o.b;
   const el=document.createElement('div');
   el.id='fx';el.className=win?'win':miss?'miss':'';
-  el.innerHTML=`<div class="fxbox"><div class="fxwho">${esc(o.who)}のコール</div><div class="fxnum">${esc(o.g)}</div>
+  el.innerHTML=`<div class="fxbox"><div class="fxwho">${o.who==null?T('あなたのコール'):T('{n}のコール',{n:esc(o.who)})}</div><div class="fxnum">${esc(o.g)}</div>
 <div class="fxtilt"><div class="fxh ${o.h?'':'zero'}">${o.h} HIT!</div>${win?'':`<div class="fxb ${o.b?'':'zero'}">${o.b} BLOW!</div>`}</div>
-${win?'<div class="fxsub">正解！</div>':miss?'<div class="fxsub">ハズレ…</div>':''}</div>`;
+${win?'<div class="fxsub">'+T('正解！')+'</div>':miss?'<div class="fxsub">'+T('ハズレ…')+'</div>':''}</div>`;
   /* 正解は紙ふぶき */
   if(win)for(let i=0;i<48;i++){
     const c=document.createElement('i');c.className='cf';
@@ -154,17 +154,20 @@ function home(err){
   room=null;solo=null;cur=[];sel=-1;
   const n=LS.get('hb-n')||'3',on=!!db;
   app.innerHTML=`<h1>${TITLE}</h1>
-<div class="card">相手のひみつの数字を、先に当てたほうが勝ち！<br><b class="H">ヒット</b> … 数字も場所も同じ<br><b class="B">ブロー</b> … 数字は同じで、場所がちがう</div>
+${langSwitchHtml()}
+<div class="card">${T('相手のひみつの数字を、先に当てたほうが勝ち！')}<br><b class="H">${T('ヒット')}</b> ${T('… 数字も場所も同じ')}<br><b class="B">${T('ブロー')}</b> ${T('… 数字は同じで、場所がちがう')}</div>
 <div class="card">
-<div class="seg">${['3','4'].map(v=>`<button class="sub dg ${v===n?'on':''}" data-n="${v}">${v}けた</button>`).join('')}</div>
-<input id="nm" maxlength="8" placeholder="なまえ" value="${esc(me.name)}">
-<button id="mk" ${on?'':'disabled'}>部屋を作る</button><hr>
-<input id="cd" inputmode="numeric" maxlength="4" placeholder="部屋コード(4けた)" value="${esc(LS.get('hb-room')||'')}">
-<button id="jn" class="sub" ${on?'':'disabled'}>入室する</button>
+<div class="seg">${['3','4'].map(v=>`<button class="sub dg ${v===n?'on':''}" data-n="${v}">${T('{n}けた',{n:v})}</button>`).join('')}</div>
+<input id="nm" maxlength="8" placeholder="${T('なまえ')}" value="${esc(me.name)}">
+<button id="mk" ${on?'':'disabled'}>${T('部屋を作る')}</button><hr>
+<input id="cd" inputmode="numeric" maxlength="4" placeholder="${T('部屋コード(4けた)')}" value="${esc(LS.get('hb-room')||'')}">
+<button id="jn" class="sub" ${on?'':'disabled'}>${T('入室する')}</button>
 <div class="err" id="er">${esc(err||'')}</div></div>
-<div class="card"><button id="so" class="sub">ひとりで練習</button>
-<div class="dim">ベスト: 3けた ${esc(LS.get('hb-best3')||'-')}回 / 4けた ${esc(LS.get('hb-best4')||'-')}回</div></div>
-<div class="dim">オンラインは8人まで。A〜Dのフロアで同時に対戦できます</div>${FOOT}`;
+<div class="card"><button id="so" class="sub">${T('ひとりで練習')}</button>
+<div class="dim">${T('ベスト: 3けた {a}回 / 4けた {b}回',{a:esc(LS.get('hb-best3')||'-'),b:esc(LS.get('hb-best4')||'-')})}</div></div>
+<div class="dim">${T('オンラインは8人まで。A〜Dのフロアで同時に対戦できます')}</div>${FOOT}`;
+  /* 言語の切りかえ: 入力中のなまえを覚えてから読みこみ直す(i18n.js) */
+  langSwitchInit(()=>{const v=$('nm').value.trim();if(v)LS.set('hb-name',v)});
   app.querySelectorAll('.dg').forEach(b=>b.onclick=()=>{
     LS.set('hb-n',b.dataset.n);app.querySelectorAll('.dg').forEach(x=>x.classList.toggle('on',x===b))});
   $('mk').onclick=()=>enter(true);
@@ -177,18 +180,18 @@ function startSolo(){
   solo={n,secret:randomNum(n),list:[],done:false,best:false};memo={};pmemo=[];psel=-1;cur=[];sel=-1;drawSolo()}
 function drawSolo(){
   const s=solo;
-  app.innerHTML=`<h1>${TITLE}</h1><div class="dim">ひとりで練習(${s.n}けた)</div>
-${s.done?`<div class="card"><div class="big ok">🎉 ${esc(s.secret)}</div><div>${s.list.length}回で当てた！${s.best?' <b>ベスト更新！</b>':''}</div><button id="ag">もう一回</button></div>`
+  app.innerHTML=`<h1>${TITLE}</h1><div class="dim">${T('ひとりで練習({n}けた)',{n:s.n})}</div>
+${s.done?`<div class="card"><div class="big ok">🎉 ${esc(s.secret)}</div><div>${T('{n}回で当てた！',{n:s.list.length})}${s.best?' <b>'+T('ベスト更新！')+'</b>':''}</div><button id="ag">${T('もう一回')}</button></div>`
 :`<div class="card"><div id="pad"></div></div><div class="card">${memoHTML(s.n)}</div>`}
-<div class="card"><div class="lbl">あなたのコール</div>${histHTML(s.list,true)}</div>
-<button id="bk" class="sub">${s.done?'もどる':'やめる'}</button>${s.done?'':'<button id="gu" class="sub">こうさん</button>'}${FOOT}`;
+<div class="card"><div class="lbl">${T('あなたのコール')}</div>${histHTML(s.list,true)}</div>
+<button id="bk" class="sub">${s.done?T('もどる'):T('やめる')}</button>${s.done?'':'<button id="gu" class="sub">'+T('こうさん')+'</button>'}${FOOT}`;
   $('bk').onclick=()=>home();
   if(s.done){$('ag').onclick=startSolo;return}
-  $('gu').onclick=()=>{if(confirm('答えを見ますか？'))alert('答えは '+s.secret+' でした');startSolo()};
+  $('gu').onclick=()=>{if(confirm(T('答えを見ますか？')))alert(T('答えは {s} でした',{s:s.secret}));startSolo()};
   bindMemo(s.n);onType=null;
-  drawPad(s.n,'コール',g=>{
+  drawPad(s.n,T('コール'),g=>{
     const r=judge(s.secret,g);s.list.push({g,...r});
-    showFx({who:'あなた',g,h:r.h,b:r.b,n:s.n});
+    showFx({who:null,g,h:r.h,b:r.b,n:s.n});
     if(r.h===s.n){
       s.done=true;
       const k='hb-best'+s.n,b=+LS.get(k)||Infinity;
@@ -214,7 +217,7 @@ const seatFull=(fs,F)=>{const s=fs[F]||{},pl=room.players||{};return !!(s.a&&s.b
 /* 部屋に入る(create=true なら新しく作る)。試合中でも観戦で入れる */
 async function enter(create){
   const nm=$('nm').value.trim();
-  if(!nm){$('er').textContent='なまえを入れてね';return}
+  if(!nm){$('er').textContent=T('なまえを入れてね');return}
   me.name=nm;LS.set('hb-name',nm);
   const n=+(LS.get('hb-n')||3);
   $('mk').disabled=$('jn').disabled=true;
@@ -224,11 +227,11 @@ async function enter(create){
       /* あいている4けたのコードを探す */
       for(let i=0;i<20;i++){c=String(1000+Math.floor(Math.random()*9000));if(!(await db.ref('hitblow-rooms/'+c).get()).exists())break}}
     else{
-      if(!/^\d{4}$/.test(c))throw'部屋コードは4けたの数字だよ';
+      if(!/^\d{4}$/.test(c))throw T('部屋コードは4けたの数字だよ');
       const r=(await db.ref('hitblow-rooms/'+c).get()).val();
-      if(!r)throw'部屋がありません';
+      if(!r)throw T('部屋がありません');
       const ps=r.players||{};
-      if(!ps[me.id]&&Object.keys(ps).length>=8)throw'満員です(8人まで)'}
+      if(!ps[me.id]&&Object.keys(ps).length>=8)throw T('満員です(8人まで)')}
     code=c;ref=db.ref('hitblow-rooms/'+c);sref=db.ref('hitblow-secrets/'+c+'/'+me.id);
     if(create)await ref.set({state:'lobby',n,round:0});
     const pr=ref.child('players/'+me.id);
@@ -242,7 +245,7 @@ async function enter(create){
   }catch(e){
     if(typeof e!=='string')console.warn(e);
     const er=$('er');if(!er)return;
-    er.textContent=typeof e==='string'?e:'つながりませんでした。もう一度ためしてね';
+    er.textContent=typeof e==='string'?e:T('つながりませんでした。もう一度ためしてね');
     $('mk').disabled=$('jn').disabled=false}}
 
 /* 部屋から離れたあとの片づけ */
@@ -265,7 +268,7 @@ async function leave(){
 /* 部屋のデータが変わったら、いまの場面の画面を出す */
 function onRoom(){
   if(!ref)return;
-  if(!room){cleanup();return home('部屋が閉じました')}
+  if(!room){cleanup();return home(T('部屋が閉じました'))}
   /* 回線が切れて消えていたら、自分を入れ直す */
   if(!(room.players&&room.players[me.id])){
     if(!readd){readd=true;ref.child('players/'+me.id).set({name:me.name,joined:myJoined}).then(()=>{readd=false;odSet=false}).catch(()=>{readd=false})}
@@ -306,13 +309,13 @@ function watchGone(){
 function drawLobby(){
   const host=isHost(),pl=room.players||{},fs=room.fs||{},ready=FL.filter(F=>seatFull(fs,F)),hid=(plist()[0]||[])[0];
   app.innerHTML=`<h1>${TITLE}</h1>
-<div class="card"><div class="dim">部屋コード</div><div class="code">${esc(code)}</div><div class="dim">みんなにこのコードを教えてね(8人まで)</div></div>
+<div class="card"><div class="dim">${T('部屋コード')}</div><div class="code">${esc(code)}</div><div class="dim">${T('みんなにこのコードを教えてね(8人まで)')}</div></div>
 <div class="card">${plist().map(([id,p])=>`<span class="pl ${id===me.id?'me':''}">${esc(p.name)}${id===hid?' 👑':''}</span>`).join('')}</div>
-<div class="floors">${FL.map(F=>{const s=fs[F]||{};return `<div class="fl ${seatFull(fs,F)?'full':''}"><div class="flh">${F}フロア${seatFull(fs,F)?' ✔':''}</div><div class="fls">${['a','b'].map(k=>{const u=s[k],who=u&&pl[u]?pl[u].name:'';return `<button class="seat ${u===me.id?'on':''}" data-f="${F}" data-k="${k}" ${u&&pl[u]&&u!==me.id?'disabled':''}>${who?esc(who):'空き'}</button>`}).join('<span class="vs">VS</span>')}</div></div>`}).join('')}</div>
-<div class="card"><div class="seg">${[3,4].map(v=>`<button class="sub dg ${v===room.n?'on':''}" data-n="${v}" ${host?'':'disabled'}>${v}けた</button>`).join('')}</div>
-${host?`<button id="st" ${ready.length?'':'disabled'}>はじめる${ready.length?`(${ready.join('・')}フロア)`:''}</button>`:'<div class="dim">ホストがはじめるのを待っています</div>'}
-<div class="dim small">2人そろったフロアが同時に始まります。席に座らなかった人は観戦です</div></div>
-<button id="lv" class="sub">退出</button>${FOOT}`;
+<div class="floors">${FL.map(F=>{const s=fs[F]||{};return `<div class="fl ${seatFull(fs,F)?'full':''}"><div class="flh">${T('{f}フロア',{f:F})}${seatFull(fs,F)?' ✔':''}</div><div class="fls">${['a','b'].map(k=>{const u=s[k],who=u&&pl[u]?pl[u].name:'';return `<button class="seat ${u===me.id?'on':''}" data-f="${F}" data-k="${k}" ${u&&pl[u]&&u!==me.id?'disabled':''}>${who?esc(who):T('空き')}</button>`}).join('<span class="vs">VS</span>')}</div></div>`}).join('')}</div>
+<div class="card"><div class="seg">${[3,4].map(v=>`<button class="sub dg ${v===room.n?'on':''}" data-n="${v}" ${host?'':'disabled'}>${T('{n}けた',{n:v})}</button>`).join('')}</div>
+${host?`<button id="st" ${ready.length?'':'disabled'}>${T('はじめる')}${ready.length?T('({f}フロア)',{f:ready.join('・')}):''}</button>`:'<div class="dim">'+T('ホストがはじめるのを待っています')+'</div>'}
+<div class="dim small">${T('2人そろったフロアが同時に始まります。席に座らなかった人は観戦です')}</div></div>
+<button id="lv" class="sub">${T('退出')}</button>${FOOT}`;
   app.querySelectorAll('.seat').forEach(b=>b.onclick=()=>{
     const F=b.dataset.f,k=b.dataset.k;
     ref.child('fs').transaction(s=>{s=s||{};const had=s[F]&&s[F][k]===me.id;if(s[F]&&s[F][k]&&!had&&pl[s[F][k]])return;
@@ -354,15 +357,15 @@ function checkFx(F,f){
   if(fxSeen===null){fxSeen=new Set(gs.map(g=>g.k));if(f.first)fxSeen.add('start');if(f.last)fxSeen.add('last');return}
   if(f.first&&!fxSeen.has('start')){
     fxSeen.add('start');const second=f.first===f.a?f.b:f.a;
-    showFx({ov:`<div class="big">${esc(pname(f.first,f))}さん先攻！<br>${esc(pname(second,f))}さん後攻です！</div>`,ms:2000})}
+    showFx({ov:`<div class="big">${T('{a}先攻！<br>{b}後攻です！',{a:SAN(esc(pname(f.first,f))),b:SAN(esc(pname(second,f)))})}</div>`,ms:2000})}
   gs.forEach(g=>{
     if(fxSeen.has(g.k))return;
     fxSeen.add(g.k);
-    showFx({who:g.by===me.id?'あなた':pname(g.by,f),g:g.g,h:g.h,b:g.b,n:room.n})});
+    showFx({who:g.by===me.id?null:pname(g.by,f),g:g.g,h:g.h,b:g.b,n:room.n})});
   /* 先攻が当てたら、正解の演出のあとにサドンデス */
   if(f.last&&!fxSeen.has('last')){
     fxSeen.add('last');const second=f.last===f.a?f.b:f.a;
-    showFx({ov:`<div class="huge">サドンデス！！！</div><div class="sm">${esc(pname(second,f))}さん、当てられなかったら負け！</div>`,ms:2500})}}
+    showFx({ov:`<div class="huge">${T('サドンデス！！！')}</div><div class="sm">${T('{n}、当てられなかったら負け！',{n:SAN(esc(pname(second,f)))})}</div>`,ms:2500})}}
 
 /* 入力中の数字: 対戦中だけ、自分以外の人のものを出す */
 const typOf=(f,u)=>f.state==='play'&&u!==me.id&&f.typing&&f.typing[u]||'';
@@ -370,76 +373,76 @@ const typOf=(f,u)=>f.state==='play'&&u!==me.id&&f.typing&&f.typing[u]||'';
 /* 試合の画面(見ているフロア) */
 function drawGame(){
   const fl=room.fl||{},ks=Object.keys(fl).sort(),f=fl[VF],mine=!!f&&(f.a===me.id||f.b===me.id),all=ks.every(F=>fend(fl[F])),a=actF(),n=room.n;
-  if(!f){app.innerHTML=`<h1>${TITLE}</h1><div class="card dim">準備中…</div>`;return}
+  if(!f){app.innerHTML=`<h1>${TITLE}</h1><div class="card dim">${T('準備中…')}</div>`;return}
   const nmA=pname(f.a,f),nmB=pname(f.b,f),gs=fguesses(f),ga=gs.filter(g=>g.by===f.a),gb=gs.filter(g=>g.by===f.b);
   let body='',pad=null;
   if(f.state==='set'){
     const rd=f.ready||{};
     if(mine&&!rd[me.id]){
-      body=`<div class="card"><div class="lbl">ひみつの数字を決めよう</div><div class="dim small">${n}けた・同じ数字は使えません</div><div id="pad"></div><button id="rn" class="sub">おまかせ</button></div>
-<div class="dim">${esc(pname(oppOf(f),f))}: ${rd[oppOf(f)]?'決めた ✅':'考え中…'}</div>`;
+      body=`<div class="card"><div class="lbl">${T('ひみつの数字を決めよう')}</div><div class="dim small">${T('{n}けた・同じ数字は使えません',{n})}</div><div id="pad"></div><button id="rn" class="sub">${T('おまかせ')}</button></div>
+<div class="dim">${esc(pname(oppOf(f),f))}: ${rd[oppOf(f)]?T('決めた ✅'):T('考え中…')}</div>`;
       pad='set'}
-    else if(mine)body=`<div class="card"><div class="dim">あなたのひみつの数字</div><div class="big">${esc(mySecret||'？')}</div><div class="dim">${rd[oppOf(f)]?'まもなくスタート！':'相手が数字を決めるのを待っています…'}</div></div>`;
-    else body=`<div class="card"><div class="lbl">${esc(nmA)} VS ${esc(nmB)}</div><div class="dim">ひみつの数字を決めています</div><div>${esc(nmA)}: ${rd[f.a]?'✅':'考え中…'}　${esc(nmB)}: ${rd[f.b]?'✅':'考え中…'}</div></div>`}
+    else if(mine)body=`<div class="card"><div class="dim">${T('あなたのひみつの数字')}</div><div class="big">${esc(mySecret||'？')}</div><div class="dim">${rd[oppOf(f)]?T('まもなくスタート！'):T('相手が数字を決めるのを待っています…')}</div></div>`;
+    else body=`<div class="card"><div class="lbl">${esc(nmA)} VS ${esc(nmB)}</div><div class="dim">${T('ひみつの数字を決めています')}</div><div>${esc(nmA)}: ${rd[f.a]?'✅':T('考え中…')}　${esc(nmB)}: ${rd[f.b]?'✅':T('考え中…')}</div></div>`}
   else if(f.state==='play'){
     const opp=mine?oppOf(f):'',mg=mine?gs.filter(g=>g.by===me.id):[],pending=mg.some(g=>g.h==null);
     if(mine&&!pending)sending=false;
     const myTurn=mine&&f.turn===me.id&&!pending&&!sending;
-    const note=f.last?`<div class="card warn">${mine?(f.last===me.id?'当てた！ 後攻の相手に最後のチャンス…':'相手が当てた！ 当てれば引き分け、ラストチャンス！'):esc(pname(f.last,f))+'が当てた！ 後攻のラストチャンス'}</div>`:'';
-    const turnTxt=mine?(myTurn?'あなたの番！':pending?'判定中…':esc(pname(opp,f))+' の番…'):esc(pname(f.turn,f))+' の番';
+    const note=f.last?`<div class="card warn">${mine?(f.last===me.id?T('当てた！ 後攻の相手に最後のチャンス…'):T('相手が当てた！ 当てれば引き分け、ラストチャンス！')):T('{n}が当てた！ 後攻のラストチャンス',{n:SAN(esc(pname(f.last,f)))})}</div>`:'';
+    const turnTxt=mine?(myTurn?T('あなたの番！'):pending?T('判定中…'):T('{n} の番…',{n:esc(pname(opp,f))})):T('{n} の番',{n:esc(pname(f.turn,f))});
     body=`<div class="turn ${myTurn?'mine':''}">${turnTxt}</div>${note}
 ${mine?`<div class="card"><div id="pad"></div></div><div class="card">${memoHTML(n)}</div>`:''}
-<div class="two"><div class="card"><div class="lbl">${mine&&f.a===me.id?'あなた':esc(nmA)}</div>${histHTML(ga,mine&&f.a===me.id,typOf(f,f.a))}</div><div class="card"><div class="lbl">${mine&&f.b===me.id?'あなた':esc(nmB)}</div>${histHTML(gb,mine&&f.b===me.id,typOf(f,f.b))}</div></div>
-${mine?`<div class="dim">あなたのひみつの数字: <b>${esc(mySecret||'？')}</b></div>`:''}`;
+<div class="two"><div class="card"><div class="lbl">${mine&&f.a===me.id?T('あなた'):esc(nmA)}</div>${histHTML(ga,mine&&f.a===me.id,typOf(f,f.a))}</div><div class="card"><div class="lbl">${mine&&f.b===me.id?T('あなた'):esc(nmB)}</div>${histHTML(gb,mine&&f.b===me.id,typOf(f,f.b))}</div></div>
+${mine?`<div class="dim">${T('あなたのひみつの数字')}: <b>${esc(mySecret||'？')}</b></div>`:''}`;
     if(mine)pad={myTurn}}
   else{
-    const w=f.winner,rv=f.reveal||{},ff=f.ff?'(不戦勝)':'';
-    const res=mine?(w==='draw'?'🤝 引き分け！':w===me.id?'🏆 あなたの勝ち！'+ff:'😢 負け…'):(w==='draw'?'🤝 引き分け！':'🏆 '+esc(pname(w,f))+'の勝ち！'+ff);
+    const w=f.winner,rv=f.reveal||{},ff=f.ff?T('(不戦勝)'):'';
+    const res=mine?(w==='draw'?T('🤝 引き分け！'):w===me.id?T('🏆 あなたの勝ち！')+ff:T('😢 負け…')):(w==='draw'?T('🤝 引き分け！'):'🏆 '+T('{n}の勝ち！',{n:esc(pname(w,f))})+ff);
     body=`<div class="card"><div class="big ${mine&&w===me.id?'ok':''}" style="letter-spacing:0">${res}</div>
-<div class="two" style="margin-top:8px"><div><div class="dim">${mine&&f.a===me.id?'あなた':esc(nmA)}の数字</div><div class="big">${esc(rv[f.a]||(f.a===me.id&&mySecret)||'…')}</div></div><div><div class="dim">${mine&&f.b===me.id?'あなた':esc(nmB)}の数字</div><div class="big">${esc(rv[f.b]||(f.b===me.id&&mySecret)||'…')}</div></div></div></div>
+<div class="two" style="margin-top:8px"><div><div class="dim">${mine&&f.a===me.id?T('あなたの数字'):T('{n}の数字',{n:esc(nmA)})}</div><div class="big">${esc(rv[f.a]||(f.a===me.id&&mySecret)||'…')}</div></div><div><div class="dim">${mine&&f.b===me.id?T('あなたの数字'):T('{n}の数字',{n:esc(nmB)})}</div><div class="big">${esc(rv[f.b]||(f.b===me.id&&mySecret)||'…')}</div></div></div></div>
 <div class="two"><div class="card"><div class="lbl">${esc(nmA)}</div>${histHTML(ga,mine&&f.a===me.id)}</div><div class="card"><div class="lbl">${esc(nmB)}</div>${histHTML(gb,mine&&f.b===me.id)}</div></div>`}
   /* 全部のフロアが終わったら、ホストがロビーへ */
   let foot='';
-  if(all)foot=isHost()?'<button id="ag">もう一回(ロビーへ)</button>':'<div class="dim">ホストが「もう一回」を押すのを待っています</div>';
-  else if(mine&&fend(f))foot='<div class="dim">ほかのフロアが終わるのを待っています(下のボタンで観戦できます)</div>';
-  else if(!mine)foot='<div class="dim">観戦中</div>';
+  if(all)foot=isHost()?'<button id="ag">'+T('もう一回(ロビーへ)')+'</button>':'<div class="dim">'+T('ホストが「もう一回」を押すのを待っています')+'</div>';
+  else if(mine&&fend(f))foot='<div class="dim">'+T('ほかのフロアが終わるのを待っています(下のボタンで観戦できます)')+'</div>';
+  else if(!mine)foot='<div class="dim">'+T('観戦中')+'</div>';
   const tabs=`<div id="ftab">${ks.map(F=>{const g=fl[F],st=fend(g)?'🏁':g.state==='play'?'⚔️':'🛠';return `<button data-f="${F}" class="${F===VF?'on':''}" ${a&&a!==F?'disabled':''}>${F}${st}</button>`}).join('')}</div>`;
-  app.innerHTML=`<h1>${TITLE}</h1><div class="dim">${VF}フロア・${n}けた${mine?'':'・'+esc(nmA)+' VS '+esc(nmB)}</div>${body}${foot}
-<button id="lv" class="sub">退出</button>${tabs}`;
+  app.innerHTML=`<h1>${TITLE}</h1><div class="dim">${T('{f}フロア・{n}けた',{f:VF,n})}${mine?'':'・'+esc(nmA)+' VS '+esc(nmB)}</div>${body}${foot}
+<button id="lv" class="sub">${T('退出')}</button>${tabs}`;
   /* ボタン */
   app.querySelectorAll('#ftab button').forEach(b=>b.onclick=()=>{if(b.disabled||b.dataset.f===VF)return;VF=b.dataset.f;fxSeen=null;onRoom()});
   if($('ag'))$('ag').onclick=()=>ref.update({state:'lobby',fl:null});
-  $('lv').onclick=()=>{if(!a||confirm('試合をやめて退出しますか？(相手の不戦勝になります)'))leave()};
+  $('lv').onclick=()=>{if(!a||confirm(T('試合をやめて退出しますか？(相手の不戦勝になります)')))leave()};
   if(pad==='set'){
     const F=VF,ok=async v=>{
       if(!valid(v,n))return;
       mySecret=v;
       try{await sref.set(v);await fref(F).child('ready/'+me.id).set(true)}
-      catch(e){console.warn(e);mySecret='';alert('保存できませんでした。もう一度ためしてね');drawGame()}};
-    onType=null;drawPad(n,'決定',ok);
-    $('rn').onclick=()=>{cur=[...randomNum(n)];sel=-1;drawPad(n,'決定',ok)}}
+      catch(e){console.warn(e);mySecret='';alert(T('保存できませんでした。もう一度ためしてね'));drawGame()}};
+    onType=null;drawPad(n,T('決定'),ok);
+    $('rn').onclick=()=>{cur=[...randomNum(n)];sel=-1;drawPad(n,T('決定'),ok)}}
   else if(pad){
     const F=VF;bindMemo(n);
     /* 入力中の数字を相手と観戦者に見せる(対戦中だけ。ひみつの数字を決めるときは送らない) */
     onType=nn=>{const t=cur.some(Boolean)?Array.from({length:nn},(_,i)=>cur[i]||'_').join(''):'';
       if(t===lastTyped)return;lastTyped=t;fref(F).child('typing/'+me.id).set(t||null).catch(()=>{})};
-    drawPad(n,'コール',g=>{
+    drawPad(n,T('コール'),g=>{
       const f2=room.fl&&room.fl[F];
       if(!valid(g,n)||!f2||f2.turn!==me.id||sending)return;
       sending=true;
       fref(F).child('guesses').push({by:me.id,g,t:firebase.database.ServerValue.TIMESTAMP})
-        .catch(e=>{console.warn(e);sending=false;alert('送れませんでした。もう一度ためしてね');drawGame()})},pad.myTurn)}}
+        .catch(e=>{console.warn(e);sending=false;alert(T('送れませんでした。もう一度ためしてね'));drawGame()})},pad.myTurn)}}
 
 /* ===== はじめに: Firebase につなぐ(だめでも、ひとりで練習はできる) ===== */
 function boot(){
-  if(typeof firebase==='undefined'||typeof firebaseConfig==='undefined')return home('オンライン対戦に今つなげません(ひとりで練習はできます)');
+  if(typeof firebase==='undefined'||typeof firebaseConfig==='undefined')return home(T('オンライン対戦に今つなげません(ひとりで練習はできます)'));
   try{
     firebase.initializeApp(firebaseConfig);
     /* App Check: このサイトから来たアクセスだと証明する(reCAPTCHA Enterprise。サイトキーは公開してよいもの。失敗してもゲームは続ける) */
     try{firebase.appCheck().activate(new firebase.appCheck.ReCaptchaEnterpriseProvider('6LdxegYuAAAAAEsspAxLI1swKYC_vKCa1OpYG7p5'),true)}catch(e){console.warn('App Check',e)}
     db=firebase.database()}
-  catch(e){console.warn(e);db=null;return home('オンライン対戦に今つなげません(ひとりで練習はできます)')}
-  app.innerHTML=`<h1>${TITLE}</h1><div class="card dim">接続中…</div>`;
+  catch(e){console.warn(e);db=null;return home(T('オンライン対戦に今つなげません(ひとりで練習はできます)'))}
+  app.innerHTML=`<h1>${TITLE}</h1><div class="card dim">${T('接続中…')}</div>`;
   /* 見えない匿名ログイン。uid をそのままプレイヤーのIDにする(ひみつの数字を本人しか読めないようにするため) */
   let started=false;
   const go=()=>{if(started)return;started=true;home()};
