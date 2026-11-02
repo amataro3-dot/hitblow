@@ -150,7 +150,11 @@ ${win?'<div class="fxsub">'+T('正解！')+'</div>':miss?'<div class="fxsub">'+T
   setTimeout(close,win?2800:1600)}
 
 /* ===== ホーム ===== */
+/* 戻るボタンの確認(backguard.js): 最初の画面は「ホームに戻りますか？」、ロビーは「ルームから出ますか？」、
+   ゲーム中は「ゲームをやめますか？」(練習は最初の画面へ、対戦は部屋を出る。試合中なら相手の不戦勝) */
+function guard(lv,fn){if(window.BackGuard)BackGuard.set(lv,fn)}
 function home(err){
+  guard('home');
   room=null;solo=null;cur=[];sel=-1;
   const n=LS.get('hb-n')||'3',on=!!db;
   app.innerHTML=`<h1>${TITLE}</h1>
@@ -179,6 +183,7 @@ function startSolo(){
   const n=+(LS.get('hb-n')||3);
   solo={n,secret:randomNum(n),list:[],done:false,best:false};memo={};pmemo=[];psel=-1;cur=[];sel=-1;drawSolo()}
 function drawSolo(){
+  guard('game',()=>home());
   const s=solo;
   app.innerHTML=`<h1>${TITLE}</h1><div class="dim">${T('ひとりで練習({n}けた)',{n:s.n})}</div>
 ${s.done?`<div class="card"><div class="big ok">🎉 ${esc(s.secret)}</div><div>${T('{n}回で当てた！',{n:s.list.length})}${s.best?' <b>'+T('ベスト更新！')+'</b>':''}</div><button id="ag">${T('もう一回')}</button></div>`
@@ -307,6 +312,7 @@ function watchGone(){
 
 /* 待ちあい: フロアの席を選ぶ */
 function drawLobby(){
+  guard('room',leave);
   const host=isHost(),pl=room.players||{},fs=room.fs||{},ready=FL.filter(F=>seatFull(fs,F)),hid=(plist()[0]||[])[0];
   app.innerHTML=`<h1>${TITLE}</h1>
 <div class="card"><div class="dim">${T('部屋コード')}</div><div class="code">${esc(code)}</div><div class="dim">${T('みんなにこのコードを教えてね(8人まで)')}</div></div>
@@ -372,6 +378,7 @@ const typOf=(f,u)=>f.state==='play'&&u!==me.id&&f.typing&&f.typing[u]||'';
 
 /* 試合の画面(見ているフロア) */
 function drawGame(){
+  guard('game',leave);
   const fl=room.fl||{},ks=Object.keys(fl).sort(),f=fl[VF],mine=!!f&&(f.a===me.id||f.b===me.id),all=ks.every(F=>fend(fl[F])),a=actF(),n=room.n;
   if(!f){app.innerHTML=`<h1>${TITLE}</h1><div class="card dim">${T('準備中…')}</div>`;return}
   const nmA=pname(f.a,f),nmB=pname(f.b,f),gs=fguesses(f),ga=gs.filter(g=>g.by===f.a),gb=gs.filter(g=>g.by===f.b);
