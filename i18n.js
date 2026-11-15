@@ -49,6 +49,7 @@ const I18N = {
   'ブロー': ['Blow', '블로'],
   '… 数字は同じで、場所がちがう': ['… right number, wrong place', '… 숫자는 같지만 자리가 다름'],
   '{n}けた': ['{n} digits', '{n}자리'],
+  'けた数はフロアごとにホストが選べます': ['The host picks the number of digits for each floor', '자릿수는 플로어마다 호스트가 고를 수 있어요'],
   'なまえ': ['Name', '이름'],
   '部屋を作る': ['Create a room', '방 만들기'],
   '部屋コード(4けた)': ['Room code (4 digits)', '방 코드 (4자리)'],
