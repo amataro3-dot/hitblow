@@ -247,7 +247,7 @@ async function enter(create){
     else await pr.set({name:me.name,joined:firebase.database.ServerValue.TIMESTAMP});
     myJoined=(await pr.child('joined').get()).val()||Date.now();
     mySecret=(await sref.get()).val()||'';
-    LS.set('hb-room',c);odSet=false;judged={};startedKey='';round=null;sending=false;VF='';gone={};readd=false;
+    LS.set('hb-room',c);LS.set('hb-in','1');odSet=false;judged={};startedKey='';round=null;sending=false;VF='';gone={};readd=false;
     /* 部屋のデータが変わるたびに呼ばれる */
     ref.on('value',s=>{room=s.val();onRoom()});
   }catch(e){
@@ -259,7 +259,12 @@ async function enter(create){
 /* 部屋から離れたあとの片づけ */
 function cleanup(){
   try{ref&&ref.off()}catch(e){}
-  ref=null;sref=null;room=null;odSet=false;mySecret='';round=null;fxSeen=null;fxQ=[];VF='';LS.del('hb-room')}
+  ref=null;sref=null;room=null;odSet=false;mySecret='';round=null;fxSeen=null;fxQ=[];VF='';LS.del('hb-in')}/* 番号(hb-room)は入力欄に残す */
+
+/* 読み直したとき: 前に入っていた部屋へ自動で入り直す(自分で出たときは hb-in が消えているので戻らない) */
+function autoEnter(){
+  if(!db||LS.get('hb-in')!=='1'||!LS.get('hb-room')||!me.name||!$('cd'))return;
+  LS.del('hb-in');enter(false)}
 
 /* 退出する。試合中なら相手の不戦勝にする。最後の1人なら部屋ごと消す */
 async function leave(){
@@ -455,7 +460,7 @@ function boot(){
   app.innerHTML=`<h1>${TITLE}</h1><div class="card dim">${T('接続中…')}</div>`;
   /* 見えない匿名ログイン。uid をそのままプレイヤーのIDにする(ひみつの数字を本人しか読めないようにするため) */
   let started=false;
-  const go=()=>{if(started)return;started=true;home()};
+  const go=()=>{if(started)return;started=true;home();autoEnter()};
   try{firebase.auth().signInAnonymously().then(c=>{if(c&&c.user&&c.user.uid)me.id=c.user.uid}).catch(e=>console.warn('ログインできませんでした',e)).then(go)}catch(e){go()}
   setTimeout(go,8000)}
 boot();
