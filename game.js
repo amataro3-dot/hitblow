@@ -305,16 +305,18 @@ function onRoom(){
   if(fl[VF])checkFx(VF,fl[VF]);
   drawGame()}
 
-/* 抜けた人: 10秒待って戻らなければ、試合の相手が不戦勝にする。待ちあいの席はホストが空ける */
+/* 接続が切れた人を待つ時間: 60秒(全ゲーム共通のルール。2026-11-25) */
+const GONE_WAIT=60000;
+/* 抜けた人: 60秒待って戻らなければ、試合の相手が不戦勝にする。待ちあいの席はホストが空ける */
 function watchGone(){
   const pl=room.players||{},now=Date.now();let wait=false;
-  const miss=u=>{if(!u||pl[u]){delete gone[u];return false}gone[u]=gone[u]||now;if(now-gone[u]<10000){wait=true;return false}return true};
+  const miss=u=>{if(!u||pl[u]){delete gone[u];return false}gone[u]=gone[u]||now;if(now-gone[u]<GONE_WAIT){wait=true;return false}return true};
   if(room.state==='game'){
     for(const F in room.fl||{}){const f=room.fl[F];if(fend(f))continue;
       if(f.a===me.id||f.b===me.id){const o=oppOf(f);if(miss(o))fref(F).update({state:'end',winner:me.id,ff:1})}
       else if(isHost()&&miss(f.a)&&miss(f.b))fref(F).update({state:'end',winner:'draw',ff:1})}}
   else if(isHost()){for(const F in room.fs||{})for(const k in room.fs[F]||{})if(miss(room.fs[F][k]))ref.child('fs/'+F+'/'+k).remove()}
-  if(wait&&!gwt)gwt=setTimeout(()=>{gwt=0;if(ref&&room)onRoom()},10200)}
+  if(wait&&!gwt)gwt=setTimeout(()=>{gwt=0;if(ref&&room)onRoom()},GONE_WAIT+200)}
 
 /* ===== オンライン: 画面 ===== */
 
