@@ -43,6 +43,10 @@ const I18N = {
   'Muddy\'s Games トップ': ['Muddy\'s Games home', 'Muddy\'s Games 홈'],
   '遊び方': ['How to play', '게임 방법'],
   'プライバシーポリシー': ['Privacy policy', '개인정보 처리방침'],
+  /* 最初の画面の説明(2026-11-25。AdSense 審査のため) */
+  "Hit & Blow とは": ["What is Hit & Blow?", "Hit & Blow란?"],
+  "相手が決めたひみつの数字を、「ヒット」と「ブロー」のヒントをたよりに当てる数字当て対戦です。数字は3けたと4けたから選べます。1つの部屋に8人まで入れて、ひとりでの練習もできます。": ["A number-guessing battle: find your opponent's secret number using \"Hit\" and \"Blow\" hints. Choose 3 or 4 digits. Up to 8 people can join one room, and you can practice on your own too.", "상대가 정한 비밀 숫자를 '히트'와 '블로' 힌트로 맞히는 숫자 맞히기 대전입니다. 숫자는 3자리와 4자리 중에서 고를 수 있습니다. 한 방에 8명까지 들어갈 수 있고, 혼자서 연습할 수도 있습니다."],
+  "📖 遊び方を見る →": ["📖 How to play →", "📖 게임 방법 보기 →"],
   '相手のひみつの数字を、先に当てたほうが勝ち！': ['Guess your opponent’s secret number first to win!', '상대의 비밀 숫자를 먼저 맞히는 쪽이 이겨요!'],
   'ヒット': ['Hit', '히트'],
   '… 数字も場所も同じ': ['… right number, right place', '… 숫자도 자리도 같음'],

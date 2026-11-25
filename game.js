@@ -22,6 +22,8 @@ const LS={
   set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
   del(k){try{localStorage.removeItem(k)}catch(e){}}};
 const TITLE='🔢 Hit & Blow';
+/* 最初の画面は説明の段に「遊び方を見る」があるので、下のリンクに遊び方を入れない(2026-11-25) */
+const FOOT_HOME=`<p class="dim foot"><a href="${sitePath('/')}">${T("Muddy's Games トップ")}</a>・<a href="${sitePath('/privacy.html')}">${T('プライバシーポリシー')}</a></p>`;
 const FOOT=`<p class="dim foot"><a href="${sitePath('/')}">${T("Muddy's Games トップ")}</a>・<a href="${sitePath('/howto-hitblow.html')}">${T('遊び方')}</a>・<a href="${sitePath('/privacy.html')}">${T('プライバシーポリシー')}</a></p>`;
 
 /* 判定: 数字も場所も同じ=ヒット、数字だけ同じ=ブロー */
@@ -171,7 +173,8 @@ ${langSwitchHtml()}
 <div class="seg">${['3','4'].map(v=>`<button class="sub dg ${v===n?'on':''}" data-n="${v}">${T('{n}けた',{n:v})}</button>`).join('')}</div>
 <button id="so">${T('はじめる')}</button>
 <div class="dim">${T('ベスト: 3けた {a}回 / 4けた {b}回',{a:esc(LS.get('hb-best3')||'-'),b:esc(LS.get('hb-best4')||'-')})}</div></div>
-<div class="dim">${T('オンラインは8人まで。A〜Dのフロアで同時に対戦できます')}</div>${FOOT}`;
+<div class="dim">${T('オンラインは8人まで。A〜Dのフロアで同時に対戦できます')}</div>
+<div class="about"><h2>${T("Hit & Blow とは")}</h2><p>${T("相手が決めたひみつの数字を、「ヒット」と「ブロー」のヒントをたよりに当てる数字当て対戦です。数字は3けたと4けたから選べます。1つの部屋に8人まで入れて、ひとりでの練習もできます。")}</p><p><a href="${sitePath('/howto-hitblow.html')}">${T('📖 遊び方を見る →')}</a></p></div>${FOOT_HOME}`;
   /* 言語の切りかえ: 入力中のなまえを覚えてから読みこみ直す(i18n.js) */
   langSwitchInit(()=>{const v=$('nm').value.trim();if(v)LS.set('hb-name',v)});
   app.querySelectorAll('.dg').forEach(b=>b.onclick=()=>{

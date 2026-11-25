@@ -152,3 +152,6 @@ button.dgf.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .hist tr.typing td:last-child{font-size:11px}
 /* メモで ✕ にした数字ボタン: 薄くするだけ(押せる。押せないボタンより薄く、線は引かない) */
 .keys button.memox:not(:disabled){color:color-mix(in srgb,var(--tx) 28%,transparent);background:color-mix(in srgb,var(--bd) 35%,var(--card))}
+
+/* 最初の画面の説明(2026-11-25) */
+.about{text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px 14px;margin:12px 0 6px}.about h2{font-size:16px;margin:0 0 4px}.about p{margin:4px 0;font-size:14px;line-height:1.7}.about a{color:var(--ac)}
